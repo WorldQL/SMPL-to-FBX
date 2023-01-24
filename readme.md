@@ -22,8 +22,9 @@ I can convert motions in SMPL format into FBX files.
 5. `python3 Convert.py --input_pkl_base <pkl_path> --fbx_source_path <fbx_path>/SMPL_m_unityDoubleBlends_lbs_10_scale5_207_v1.0.0.fbx --output_base <output_path>` to start converting.
 
 
-    OPTIONAL ARGUMENT:
-    --fps <60/30>
+    Optional Argument:
+    ```--fps <60/30>```
+        *60 fps is the default.
 
 ## What's inside the pkl file?
 A pkl file contains a dictionary with two keys: `smpl_poses` and `smpl_trans`. There's a sample pkl file in `./Pkls/sample.pkl`.
