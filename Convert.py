@@ -14,7 +14,8 @@ import argparse
 import tqdm
 import os
 
-def getArg():
+
+def get_arg():
     parser = argparse.ArgumentParser()
     parser.add_argument('--input_pkl_base', type=str, required=True)
     parser.add_argument('--fbx_source_path', type=str, required=True)
@@ -22,8 +23,9 @@ def getArg():
 
     return parser.parse_args()
 
+
 if __name__ == "__main__":
-    args = getArg()
+    args = get_arg()
     input_pkl_base = args.input_pkl_base
     fbx_source_path = args.fbx_source_path
     output_base = args.output_base
@@ -33,12 +35,11 @@ if __name__ == "__main__":
         pkl_name = os.path.basename(pkl_name).split('/')[-1]
         try:
             fbxReadWrite = FbxReadWrite(fbx_source_path)
-            fbxReadWrite.addAnimation(pkl_name, smpl_params)
-            fbxReadWrite.writeFbx(output_base, pkl_name)
+            fbxReadWrite.add_animation(pkl_name, smpl_params)
+            fbxReadWrite.write_fbx(output_base, pkl_name)
         except Exception as e:
             fbxReadWrite.destroy()
-            print ("- - Distroy")
+            print("- - Destroy")
             raise e
         finally:
             fbxReadWrite.destroy()
-

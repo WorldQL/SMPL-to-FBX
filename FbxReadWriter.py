@@ -1,24 +1,28 @@
-
-import sys
-from typing import Dict
-from SmplObject import SmplObjects
 import os
-from scipy.spatial.transform import Rotation as R
+from typing import Dict
+
 import numpy as np
+from scipy.spatial.transform import Rotation as R
+
+from SmplObject import SmplObjects
 
 try:
     from FbxCommon import *
     from fbx import *
 except ImportError:
     print("Error: module FbxCommon failed to import.\n")
-    print("Copy the files located in the compatible sub-folder lib/python<version> into your python interpreter site-packages folder.")
+    print("Copy the files located in the compatible sub-folder lib/python<version> into your python interpreter "
+          "site-packages folder.")
     import platform
+
     if platform.system() == 'Windows' or platform.system() == 'Microsoft':
-        print('For example: copy ..\\..\\lib\\Python27_x64\\* C:\\Python27\\Lib\\site-packages')
+        print('For example: copy ..\\..\\lib\\Python37_x64\\* C:\\Python27\\Lib\\site-packages')
     elif platform.system() == 'Linux':
-        print('For example: cp ../../lib/Python27_x64/* /usr/local/lib/python2.7/site-packages')
+        print('For example: cp ../../lib/Python37_x64/* /usr/local/lib/python2.7/site-packages')
     elif platform.system() == 'Darwin':
-        print('For example: cp ../../lib/Python27_x64/* /Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages')
+        print('For example: cp ../../lib/Python37_x64/* '
+              '/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages')
+
 
 class FbxReadWrite(object):
     def __init__(self, fbx_source_path):
@@ -34,13 +38,13 @@ class FbxReadWrite(object):
         if not lResult:
             raise Exception("An error occured while loading the scene :(")
 
-    def _write_curve(self, lCurve:FbxAnimCurve, data:np.ndarray):
+    def _write_curve(self, lCurve: FbxAnimCurve, data: np.ndarray):
         """
         data: np.ndarray of (N, )
         """
         lKeyIndex = 0
         lTime = FbxTime()
-        lTime.SetGlobalTimeMode(FbxTime.eFrames60) # Set to fps=60
+        lTime.SetGlobalTimeMode(FbxTime.eFrames60)  # Set to fps=60
         data = np.squeeze(data)
 
         lCurve.KeyModifyBegin()
@@ -51,18 +55,18 @@ class FbxReadWrite(object):
             lCurve.KeySetInterpolation(lKeyIndex, FbxAnimCurveDef.eInterpolationCubic)
         lCurve.KeyModifyEnd()
 
-    def addAnimation(self, pkl_filename:str, smpl_params:Dict, verbose:bool = False):
+    def add_animation(self, pkl_filename: str, smpl_params: Dict, verbose: bool = False):
         lScene = self.lScene
 
         # 0. Set fps to 60
         lGlobalSettings = lScene.GetGlobalSettings()
-        if verbose==True:
-            print ("Before time mode:{}".format(lGlobalSettings.GetTimeMode()))
+        if verbose:
+            print("Before time mode:{}".format(lGlobalSettings.GetTimeMode()))
         lGlobalSettings.SetTimeMode(FbxTime.eFrames60)
-        if verbose==True:
-            print ("After time mode:{}".format(lScene.GetGlobalSettings().GetTimeMode()))
+        if verbose:
+            print("After time mode:{}".format(lScene.GetGlobalSettings().GetTimeMode()))
 
-        self.destroyAllAnimation()
+        self.destroy_all_animation()
 
         lAnimStackName = pkl_filename
         lAnimStack = FbxAnimStack.Create(lScene, lAnimStackName)
@@ -76,7 +80,7 @@ class FbxReadWrite(object):
         smpl_poses = smpl_params["smpl_poses"]
         for idx, name in enumerate(names):
             node = lRootNode.FindChild(name)
-            rotvec = smpl_poses[:, idx*3:idx*3+3]
+            rotvec = smpl_poses[:, idx * 3:idx * 3 + 3]
             _euler = []
             for _f in range(rotvec.shape[0]):
                 r = R.from_rotvec([rotvec[_f, 0], rotvec[_f, 1], rotvec[_f, 2]])
@@ -88,19 +92,19 @@ class FbxReadWrite(object):
             if lCurve:
                 self._write_curve(lCurve, euler[:, 0])
             else:
-                print ("Failed to write {}, {}".format(name, "x"))
+                print("Failed to write {}, {}".format(name, "x"))
 
             lCurve = node.LclRotation.GetCurve(lAnimLayer, "Y", True)
             if lCurve:
                 self._write_curve(lCurve, euler[:, 1])
             else:
-                print ("Failed to write {}, {}".format(name, "y"))
+                print("Failed to write {}, {}".format(name, "y"))
 
             lCurve = node.LclRotation.GetCurve(lAnimLayer, "Z", True)
             if lCurve:
                 self._write_curve(lCurve, euler[:, 2])
             else:
-                print ("Failed to write {}, {}".format(name, "z"))
+                print("Failed to write {}, {}".format(name, "z"))
 
         # 3. Write smpl_trans to f_avg_root
         smpl_trans = smpl_params["smpl_trans"]
@@ -110,34 +114,34 @@ class FbxReadWrite(object):
         if lCurve:
             self._write_curve(lCurve, smpl_trans[:, 0])
         else:
-            print ("Failed to write {}, {}".format(name, "x"))
+            print("Failed to write {}, {}".format(name, "x"))
 
         lCurve = node.LclTranslation.GetCurve(lAnimLayer, "Y", True)
         if lCurve:
             self._write_curve(lCurve, smpl_trans[:, 1])
         else:
-            print ("Failed to write {}, {}".format(name, "y"))
+            print("Failed to write {}, {}".format(name, "y"))
 
         lCurve = node.LclTranslation.GetCurve(lAnimLayer, "Z", True)
         if lCurve:
             self._write_curve(lCurve, smpl_trans[:, 2])
         else:
-            print ("Failed to write {}, {}".format(name, "z"))
+            print("Failed to write {}, {}".format(name, "z"))
 
-    def writeFbx(self, write_base:str, filename:str):
-        if os.path.isdir(write_base) == False:
+    def write_fbx(self, write_base: str, filename: str):
+        if not os.path.isdir(write_base):
             os.makedirs(write_base, exist_ok=True)
         write_path = os.path.join(write_base, filename.replace(".pkl", ""))
-        print ("Writing to {}".format(write_path))
+        print("Writing to {}".format(write_path))
         lResult = SaveScene(self.lSdkManager, self.lScene, write_path)
 
-        if lResult == False:
+        if not lResult:
             raise Exception("Failed to write to {}".format(write_path))
 
     def destroy(self):
         self.lSdkManager.Destroy()
 
-    def destroyAllAnimation(self):
+    def destroy_all_animation(self):
         lScene = self.lScene
         animStackCount = lScene.GetSrcObjectCount(FbxCriteria.ObjectType(FbxAnimStack.ClassId))
         for i in range(animStackCount):
