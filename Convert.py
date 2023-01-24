@@ -12,6 +12,7 @@ from FbxReadWriter import FbxReadWrite
 from SmplObject import SmplObjects
 import argparse
 import tqdm
+import os
 
 def getArg():
     parser = argparse.ArgumentParser()
@@ -29,6 +30,7 @@ if __name__ == "__main__":
 
     smplObjects = SmplObjects(input_pkl_base)
     for pkl_name, smpl_params in tqdm.tqdm(smplObjects):
+        pkl_name = os.path.basename(pkl_name).split('/')[-1]
         try:
             fbxReadWrite = FbxReadWrite(fbx_source_path)
             fbxReadWrite.addAnimation(pkl_name, smpl_params)
