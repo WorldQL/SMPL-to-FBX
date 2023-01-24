@@ -24,6 +24,23 @@ except ImportError:
               '/Library/Frameworks/Python.framework/Versions/2.7/lib/python2.7/site-packages')
 
 
+def _write_curve(lCurve: FbxAnimCurve, data: np.ndarray, fbx_time: FbxTime):
+    """
+    data: np.ndarray of (N, )
+    """
+    lTime = FbxTime()
+    lTime.SetGlobalTimeMode(fbx_time)  # Set to fps=60
+    data = np.squeeze(data)
+
+    lCurve.KeyModifyBegin()
+    for i in range(data.shape[0]):
+        lTime.SetFrame(i, fbx_time)
+        lKeyIndex = lCurve.KeyAdd(lTime)[0]
+        lCurve.KeySetValue(lKeyIndex, data[i])
+        lCurve.KeySetInterpolation(lKeyIndex, FbxAnimCurveDef.eInterpolationCubic)
+    lCurve.KeyModifyEnd()
+
+
 class FbxReadWrite(object):
     def __init__(self, fbx_source_path):
         # Prepare the FBX SDK.
@@ -38,31 +55,19 @@ class FbxReadWrite(object):
         if not lResult:
             raise Exception("An error occured while loading the scene :(")
 
-    def _write_curve(self, lCurve: FbxAnimCurve, data: np.ndarray):
-        """
-        data: np.ndarray of (N, )
-        """
-        lKeyIndex = 0
-        lTime = FbxTime()
-        lTime.SetGlobalTimeMode(FbxTime.eFrames60)  # Set to fps=60
-        data = np.squeeze(data)
-
-        lCurve.KeyModifyBegin()
-        for i in range(data.shape[0]):
-            lTime.SetFrame(i, FbxTime.eFrames60)
-            lKeyIndex = lCurve.KeyAdd(lTime)[0]
-            lCurve.KeySetValue(lKeyIndex, data[i])
-            lCurve.KeySetInterpolation(lKeyIndex, FbxAnimCurveDef.eInterpolationCubic)
-        lCurve.KeyModifyEnd()
-
-    def add_animation(self, pkl_filename: str, smpl_params: Dict, verbose: bool = False):
+    def add_animation(self, pkl_filename: str, fps: int, smpl_params: Dict, verbose: bool = False):
         lScene = self.lScene
 
-        # 0. Set fps to 60
+        if fps == 30:
+            fbx_time = FbxTime.eFrames30
+        else:
+            fbx_time = FbxTime.eFrames60
+
+        # 0 set fps
         lGlobalSettings = lScene.GetGlobalSettings()
         if verbose:
             print("Before time mode:{}".format(lGlobalSettings.GetTimeMode()))
-        lGlobalSettings.SetTimeMode(FbxTime.eFrames60)
+        lGlobalSettings.SetTimeMode(fbx_time)
         if verbose:
             print("After time mode:{}".format(lScene.GetGlobalSettings().GetTimeMode()))
 
@@ -90,19 +95,19 @@ class FbxReadWrite(object):
 
             lCurve = node.LclRotation.GetCurve(lAnimLayer, "X", True)
             if lCurve:
-                self._write_curve(lCurve, euler[:, 0])
+                _write_curve(lCurve, euler[:, 0], fbx_time)
             else:
                 print("Failed to write {}, {}".format(name, "x"))
 
             lCurve = node.LclRotation.GetCurve(lAnimLayer, "Y", True)
             if lCurve:
-                self._write_curve(lCurve, euler[:, 1])
+                _write_curve(lCurve, euler[:, 1], fbx_time)
             else:
                 print("Failed to write {}, {}".format(name, "y"))
 
             lCurve = node.LclRotation.GetCurve(lAnimLayer, "Z", True)
             if lCurve:
-                self._write_curve(lCurve, euler[:, 2])
+                _write_curve(lCurve, euler[:, 2], fbx_time)
             else:
                 print("Failed to write {}, {}".format(name, "z"))
 
@@ -112,19 +117,19 @@ class FbxReadWrite(object):
         node = lRootNode.FindChild(name)
         lCurve = node.LclTranslation.GetCurve(lAnimLayer, "X", True)
         if lCurve:
-            self._write_curve(lCurve, smpl_trans[:, 0])
+            _write_curve(lCurve, smpl_trans[:, 0], fbx_time)
         else:
             print("Failed to write {}, {}".format(name, "x"))
 
         lCurve = node.LclTranslation.GetCurve(lAnimLayer, "Y", True)
         if lCurve:
-            self._write_curve(lCurve, smpl_trans[:, 1])
+            _write_curve(lCurve, smpl_trans[:, 1], fbx_time)
         else:
             print("Failed to write {}, {}".format(name, "y"))
 
         lCurve = node.LclTranslation.GetCurve(lAnimLayer, "Z", True)
         if lCurve:
-            self._write_curve(lCurve, smpl_trans[:, 2])
+            _write_curve(lCurve, smpl_trans[:, 2], fbx_time)
         else:
             print("Failed to write {}, {}".format(name, "z"))
 

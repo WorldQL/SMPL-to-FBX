@@ -5,9 +5,9 @@ I can convert motions in SMPL format into FBX files.
 
 ## Steps
 1. Install [Python FBX](https://download.autodesk.com/us/fbx/20112/fbx_sdk_help/index.html?url=WS1a9193826455f5ff453265c9125faa23bbb5fe8.htm,topicNumber=d0e8312).
-1. Download the [SMPL fbx model](https://smpl.is.tue.mpg.de) for unity. Keep the male model `SMPL_m_unityDoubleBlends_lbs_10_scale5_207_v1.0.0.fbx`.
-2. `pip install -r requirements.txt`
-3. Here's the file structure:
+2. Download the [SMPL fbx model](https://smpl.is.tue.mpg.de) for unity. Keep the male model `SMPL_m_unityDoubleBlends_lbs_10_scale5_207_v1.0.0.fbx`.
+3. `pip install -r requirements.txt`
+4. Here's the file structure:
     ```
     <root>
     |--Convert.py
@@ -19,7 +19,12 @@ I can convert motions in SMPL format into FBX files.
     |  |--SMPL_m_unityDoubleBlends_lbs_10_scale5_207_v1.0.0.fbx
     |--<output_path>/
     ```
-4. `python3 Convert.py --input_pkl_base <pkl_path> --fbx_source_path <fbx_path>/SMPL_m_unityDoubleBlends_lbs_10_scale5_207_v1.0.0.fbx --output_base <output_path>` to start converting.
+5. `python3 Convert.py --input_pkl_base <pkl_path> --fbx_source_path <fbx_path>/SMPL_m_unityDoubleBlends_lbs_10_scale5_207_v1.0.0.fbx --output_base <output_path>` to start converting.
+
+
+    OPTIONAL ARGUMENT:
+    --fps <60/30>
+
 ## What's inside the pkl file?
 A pkl file contains a dictionary with two keys: `smpl_poses` and `smpl_trans`. There's a sample pkl file in `./Pkls/sample.pkl`.
 * `Dict["smpl_poses"]` : A `(N, 72)` ndarray, where `N` is the frame number.
